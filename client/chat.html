@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.16/tailwind.min.css"
+        integrity="sha512-5D0ofs3AsWoKsspH9kCWlY7qGxnHvdN/Yz2rTNwD9L271Mno85s+5ERo03qk9SUNtdgOZ4A9t8kRDexkvnWByA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.socket.io/4.2.0/socket.io.min.js"
+        integrity="sha384-PiBR5S00EtOj2Lto9Uu81cmoyZqR57XcOna1oAuVuIEjzj0wpqDVfD0JA9eXlRsj"
+        crossorigin="anonymous"></script>
+    <title>Document</title>
+</head>
+<style>
+    body {
+        display: flex;
+        justify-content: center;
+    }
+
+    #chat-heseg {
+        width: 55vw;
+        height: 90vh;
+        position: relative;
+    }
+
+    #inputCont {
+        width: full;
+        height: 6rem;
+        display: flex;
+        flex-direction: column;
+        margin-top: auto;
+    }
+
+    #chat {
+        width: full;
+        height: 60%;
+    }
+
+    #chat:focus {
+        outline: none;
+    }
+
+    #btn {
+        width: full;
+        height: 40%;
+    }
+</style>
+
+<body id="body" class="hidden ">
+
+    <button class="absolute right-5 bottom-5 bg-red-500 rounded-lg text-white px-1 border border-black" id="logout">log
+        out</button>
+
+    <div class="chatArea m-4 rounded flex flex-col border border-gray-400" id="chat-heseg">
+
+        <div id="inputCont">
+            <textarea class="rounded-sm border border-gray-400" type="text" placeholder="chat" id="chat"></textarea>
+            <button id="btn" class="bg-blue-600 text-white rounded-sm">Send</button>
+        </div>
+
+    </div>
+
+
+
+    <script>
+        const socket = io('http://localhost:3000')
+        let arr = []
+        const LoggedUser = localStorage.getItem('loggedUser')
+        console.log(LoggedUser)
+
+        let chatData = JSON.parse(localStorage.getItem('chats'))
+
+        const bodyHidden = document.getElementById('body')
+        const logout = document.getElementById('logout')
+        const chatHeseg = document.getElementById('chat-heseg')
+        window.addEventListener('load', () => {
+            if (localStorage.getItem('loggedIn') === 'true') {
+                bodyHidden.classList.remove('hidden')
+            } else {
+                alert('Not Logged In!')
+            };
+
+            for (let i = 0; i < chatData.length; i++) {
+                let a = chatData;
+                chatHeseg.insertAdjacentHTML('afterbegin', `
+                <div class="flex">
+        <p class="font-semibold text-blue-400">${LoggedUser}:</p>
+        <p>${a[i].text}</p>
+    </div>
+                `)
+            }
+        })
+
+        const chat = document.getElementById('chat')
+        const btn = document.getElementById('btn')
+
+        class Post {
+            constructor(text) {
+                this.text = text;
+                this.id = localStorage.getItem('loggedUser')
+            }
+        }
+
+        // btn.addEventListener('click', () => {
+        //     const post = new Post(chat.value)
+        //     if ('chats' in localStorage) {
+        //         arr.push(JSON.parse(localStorage.getItem('chats')))
+        //         arr.push(post)
+        //         localStorage.setItem('chats', JSON.stringify(arr));
+        //     } else {
+        //         localStorage.setItem('chats', JSON.stringify(post));
+        //     }
+        // })
+
+        btn.addEventListener('click', () => {
+            // const post = new Post(chat.value)
+
+            socket.emit('chat', {
+                message: chat.value,
+                author: LoggedUser.username
+            })
+
+        })
+
+        const socket = io('http://localhost:3000')
+
+        socket.on('chat', function (msg) {
+            chatHeseg.innerHTML += '<p><strong>' + msg.author + ':</strong>' + msg.message + '</p>'
+        })
+
+        logout.addEventListener('click', () => {
+            localStorage.setItem('loggedIn', 'false')
+            location.href = 'http://127.0.0.1:5500/login.html'
+        })
+    </script>
+</body>
+
+</html>
